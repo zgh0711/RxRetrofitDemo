@@ -1,4 +1,4 @@
-package com.zgh.rxretrofitdemo;
+package com.zgh.rxretrofitdemo.retrofit;
 
 
 import java.io.IOException;

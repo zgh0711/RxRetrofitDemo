@@ -6,13 +6,19 @@ import android.view.View;
 import android.widget.Button;
 
 import com.blankj.utilcode.util.LogUtils;
+import com.blankj.utilcode.util.ToastUtils;
 import com.zgh.rxretrofitdemo.R;
+import com.zgh.rxretrofitdemo.retrofit.MovieEntity;
+import com.zgh.rxretrofitdemo.retrofit.MovieService;
+import com.zgh.rxretrofitdemo.retrofit.RetrofitManager;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
@@ -22,6 +28,7 @@ import io.reactivex.schedulers.Schedulers;
  * http://www.jianshu.com/p/8818b98c44e2
  */
 public class Test2 extends AppCompatActivity implements View.OnClickListener {
+    private Disposable disposable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,12 +71,53 @@ public class Test2 extends AppCompatActivity implements View.OnClickListener {
             }
         };
 
-        observable.subscribeOn(Schedulers.io())  //上游发送事件事件时切换到 io 线程
-                  .observeOn(AndroidSchedulers.mainThread())  //下游接收事件时切换到 UI 线程
+        observable.subscribeOn(Schedulers.io())  //指定上游发送事件的线程
+                  .observeOn(AndroidSchedulers.mainThread())  //指定下游接收事件的线程
                   .subscribe(consumer);
     }
 
     private void withRetrofit() {
+        String baseUrl = "https://api.douban.com/v2/movie/";
+        MovieService service = RetrofitManager.getInstance(baseUrl).create(MovieService.class);
 
+        service.getTopMovies()
+               .subscribeOn(Schedulers.io())
+               .observeOn(AndroidSchedulers.mainThread())
+               .subscribe(new Observer<MovieEntity>() {
+                   @Override
+                   public void onSubscribe(@NonNull Disposable d) {
+                       disposable = d;
+                   }
+
+                   @Override
+                   public void onNext(@NonNull MovieEntity movieEntity) {
+                       LogUtils.d(movieEntity.getCount());
+                       LogUtils.d(movieEntity.getSubjects().get(1).getTitle());
+                   }
+
+                   @Override
+                   public void onError(@NonNull Throwable e) {
+                       ToastUtils.showShort("error");
+                       LogUtils.d(e.getLocalizedMessage());
+                       LogUtils.d(e.getMessage());
+                       LogUtils.d(e.toString());
+                   }
+
+                   @Override
+                   public void onComplete() {
+                       ToastUtils.showShort("onComplete");
+                   }
+               });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //当 Activity 退出时，切断事件传递，以避免继续发送事件到主线程导致程序崩溃
+        if (disposable != null) {
+            disposable.dispose();
+        }
+
+        LogUtils.d(disposable.isDisposed());
     }
 }
