@@ -1,5 +1,7 @@
 package com.zgh.rxretrofitdemo.retrofit;
 
+import android.content.Context;
+
 import com.blankj.utilcode.util.LogUtils;
 import com.zgh.rxretrofitdemo.JsonTools;
 
@@ -10,11 +12,16 @@ import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
 
 /**
- * Created by ZGH on 2017/9/8.
+ * Created by ZGH on 2017/9/11.
  */
 
-public abstract class BaseObserver<T> implements Observer<BaseEntity<T>>{
+public abstract class LoadingObserver<T> implements Observer<BaseEntity<T>> {
     private final int SUCCESS_CODE = 0;
+    private Context context;
+
+    public LoadingObserver(Context context) {
+        this.context = context;
+    }
 
     @Override
     public void onSubscribe(@NonNull Disposable d) {
@@ -47,17 +54,20 @@ public abstract class BaseObserver<T> implements Observer<BaseEntity<T>>{
     public void onError(@NonNull Throwable e) {
         onRequestEnd("onError");
         onFailure(404,e.toString());
-        LogUtils.e("HTTP","onError--" + e.toString());
+        LogUtils.e("HTTP", "onError--" + e.toString());
     }
 
     @Override
     public void onComplete() {
+        onRequestEnd("onComplete");
     }
 
     private void onRequestStart() {
+        LoadingDialog.show(context);
     }
 
     private void onRequestEnd(String msg) {
+        LoadingDialog.cancel();
         LogUtils.d("HTTP","请求结束--" + msg);
     }
 

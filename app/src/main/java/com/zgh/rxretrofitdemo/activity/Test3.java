@@ -1,7 +1,7 @@
 package com.zgh.rxretrofitdemo.activity;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 
@@ -9,7 +9,7 @@ import com.blankj.utilcode.util.LogUtils;
 import com.zgh.rxretrofitdemo.R;
 import com.zgh.rxretrofitdemo.retrofit.ApiService;
 import com.zgh.rxretrofitdemo.retrofit.BaseEntity;
-import com.zgh.rxretrofitdemo.retrofit.BaseObserver;
+import com.zgh.rxretrofitdemo.retrofit.LoadingObserver;
 import com.zgh.rxretrofitdemo.retrofit.RetrofitManager;
 import com.zgh.rxretrofitdemo.retrofit.TestEntity;
 
@@ -70,7 +70,7 @@ public class Test3 extends AppCompatActivity implements View.OnClickListener {
         ApiService service = RetrofitManager.getInstance(url).create(ApiService.class);
         service.getData()
                 .compose(this.<BaseEntity<TestEntity>>switchThread())
-                .subscribe(new BaseObserver<TestEntity>() {
+                .subscribe(new LoadingObserver<TestEntity>(this) {
                     @Override
                     protected void onSuccess(TestEntity data) {
 
