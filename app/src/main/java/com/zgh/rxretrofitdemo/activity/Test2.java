@@ -118,6 +118,5 @@ public class Test2 extends AppCompatActivity implements View.OnClickListener {
             disposable.dispose();
         }
 
-        LogUtils.d(disposable.isDisposed());
     }
 }

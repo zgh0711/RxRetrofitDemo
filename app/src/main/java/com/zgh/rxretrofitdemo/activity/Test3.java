@@ -7,6 +7,11 @@ import android.widget.Button;
 
 import com.blankj.utilcode.util.LogUtils;
 import com.zgh.rxretrofitdemo.R;
+import com.zgh.rxretrofitdemo.retrofit.ApiService;
+import com.zgh.rxretrofitdemo.retrofit.BaseEntity;
+import com.zgh.rxretrofitdemo.retrofit.BaseObserver;
+import com.zgh.rxretrofitdemo.retrofit.RetrofitManager;
+import com.zgh.rxretrofitdemo.retrofit.TestEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,13 +21,17 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.ObservableSource;
+import io.reactivex.ObservableTransformer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * 给初学者的RxJava2.0教程(三)
- * 转换操作符 map，flatMap，concaatMap
+ * rxjava ,retrofit 结合封装使用，
+ * rxjava 转换操作符 map，flatMap，concaatMap
  * http://www.jianshu.com/p/128e662906af
  */
 public class Test3 extends AppCompatActivity implements View.OnClickListener {
@@ -51,9 +60,27 @@ public class Test3 extends AppCompatActivity implements View.OnClickListener {
                 flatMapTransform();
                 break;
             case R.id.btn_3:
-
+                requestData();
                 break;
         }
+    }
+
+    private void requestData() {
+        String url = "https://api.zdlot.yinjiahuitong.com/";
+        ApiService service = RetrofitManager.getInstance(url).create(ApiService.class);
+        service.getData()
+                .compose(this.<BaseEntity<TestEntity>>switchThread())
+                .subscribe(new BaseObserver<TestEntity>() {
+                    @Override
+                    protected void onSuccess(TestEntity data) {
+
+                    }
+
+                    @Override
+                    protected void onFailure(int code, String msg) {
+
+                    }
+                });
     }
 
     //经过 flatMap 转换后的事件是无序发送的
@@ -104,5 +131,19 @@ public class Test3 extends AppCompatActivity implements View.OnClickListener {
                 LogUtils.d(s);
             }
         });
+    }
+
+
+    /**
+     * 封装线程切换，在网络请求时用 compose 操作符调用
+     */
+    public <T> ObservableTransformer<T,T> switchThread() {
+        return new ObservableTransformer<T, T>() {
+            @Override
+            public ObservableSource<T> apply(@NonNull Observable<T> upstream) {
+                return upstream.subscribeOn(Schedulers.io())
+                               .observeOn(AndroidSchedulers.mainThread());
+            }
+        };
     }
 }
